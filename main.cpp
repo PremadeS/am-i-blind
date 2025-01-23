@@ -10,6 +10,7 @@ namespace fs = std::filesystem;
 #define BLIND_MSG "yes you are"
 #define NOT_BLIND_MSG "no."
 
+// TODO: change the blind_msg_printed to blind_count, make it efficient and find out why error
 // yes i'm using snake_case and camelCase together and the earth is still the same as it was before, shock
 
 struct Config {
@@ -26,44 +27,50 @@ struct Config {
 };
 
 void handleMatch(const fs::directory_entry &entry, Config &config) {
-  string name = entry.path().filename();
-  string pathStr = entry.path().string();
+  try {
+    string name = entry.path().filename();
+    string pathStr = entry.path().string();
 
-  if (config.match_exactly) {
-    if (name == config.name) {
-      if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
-          (config.only_file && !fs::is_directory(entry))) {
-
-        if (!config.blind_msg_printed) {
-          cout << BLIND_MSG << endl;
-          config.blind_msg_printed = true;
-        }
-
-        cout << pathStr.substr(0, pathStr.length() - name.length());
-        cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END;
-      }
-    }
-
-  } else {
-    size_t pos = name.find(config.name);
-    if (pos != string::npos) {
-      pos = pathStr.rfind(config.name);
-      if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
-          (config.only_file && !fs::is_directory(entry))) {
-        {
+    if (config.match_exactly) {
+      if (name == config.name) {
+        if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
+            (config.only_file && !fs::is_directory(entry))) {
 
           if (!config.blind_msg_printed) {
             cout << BLIND_MSG << endl;
             config.blind_msg_printed = true;
           }
 
-          cout << pathStr.substr(0, pos);
-          cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << config.name
-               << HIGHLIGHT_END;
-          cout << pathStr.substr(pos + config.name.length()) << endl;
+          cout << pathStr.substr(0, pathStr.length() - name.length());
+          cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END;
+        }
+      }
+
+    } else {
+      size_t pos = name.find(config.name);
+      if (pos != string::npos) {
+        pos = pathStr.rfind(config.name);
+        if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
+            (config.only_file && !fs::is_directory(entry))) {
+          {
+
+            if (!config.blind_msg_printed) {
+              cout << BLIND_MSG << endl;
+              config.blind_msg_printed = true;
+            }
+
+            cout << pathStr.substr(0, pos);
+            cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << config.name
+                 << HIGHLIGHT_END;
+            cout << pathStr.substr(pos + config.name.length()) << endl;
+          }
         }
       }
     }
+  } catch (const fs::filesystem_error &e) {
+    cerr << "Error accessing " << entry.path() << ": " << e.what() << endl;
+  } catch (const exception &e) {
+    cerr << "Unexpected error: " << e.what() << endl;
   }
 }
 
@@ -77,8 +84,16 @@ void findThisGarbage(Config &config) {
 
 // recursively find the garbage you specified
 void findThisGarbageRecursively(Config &config) {
-  for (const auto &entry : fs::recursive_directory_iterator(config.path)) {
-    handleMatch(entry, config);
+  try {
+    for (const auto &entry : fs::recursive_directory_iterator(config.path)) {
+      try {
+        handleMatch(entry, config);
+      } catch (const fs::filesystem_error &e) {
+        continue; // skip
+      }
+    }
+  } catch (const fs::filesystem_error &e) {
+    cerr << "Error starting recursive directory iteration: " << e.what() << endl;
   }
 }
 
@@ -147,6 +162,11 @@ int main(int argc, char *argv[]) {
     config = parseDaFuqingArgs(argc, argv);
   } catch (const char *e) {
     cerr << e << endl;
+    return 1;
+  }
+
+  if (!fs::exists(config.path)) {
+    cerr << "Path don't exist: " << config.path << endl;
     return 1;
   }
 
