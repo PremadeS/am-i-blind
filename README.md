@@ -10,7 +10,7 @@ I absolutely love the default `find` tool <3
 
 `wow.txt` not found? maybe I'm not using the correct **option** let me check the **help**
 
-![really long help for a simple find tool](https://i.imgur.com/2rd4ZVQ.png)
+![really long help for a simple find tool](https://i.imgur.com/X1OPrzW.png)
 
 ***Ah yes!*** let me read a whole **fuqing essay** before I can find a simple **fuqing file**
 
