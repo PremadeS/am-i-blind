@@ -28,8 +28,10 @@ Usage: am-i-blind [OPTIONS] <name> [path]
 ### **example**
 
 ```bash
-am-i-blind wow.txt . -r # . = current directory
+am-i-blind wow.txt . -r
 ```
+
+*If no path is specified then current directory (where the script was run from) will be searched*
 
 ### **output**
 
