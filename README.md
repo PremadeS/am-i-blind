@@ -28,13 +28,13 @@ Usage: am-i-blind [OPTIONS] <name> [path]
 ### **example**
 
 ```bash
-am-i-blind wow.txt -r 
+am-i-blind wow.txt . -r # . = current directory
 ```
 
 ### **output**
 
 ```bash
-/totally-sane-human/am-i-blind/testing/wow.txt # wow.txt will be in red 
+./testing/wow.txt # wow.txt will be in red 
 yes you are x1 times 
 ```
 
