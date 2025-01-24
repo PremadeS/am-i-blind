@@ -34,11 +34,11 @@ am-i-blind wow.txt -r
 ### **output**
 
 ```bash
-/home/premades/Documents/cpp/am-i-blind/testing/wow.txt # wow.txt will be in red 
+/totally-sane-human/am-i-blind/testing/wow.txt # wow.txt will be in red 
 yes you are x1 times 
 ```
 
-If no `file` or `directory` is found then the output is `no.` indicating you are not **blind**, *On the other hand* the output will contain all of the matches and the last line very ***respectfully*** telling you that you are blind *with number of matched results**
+If no `file` or `directory` is found then the output is `no.` indicating you are not **blind**, *On the other hand* the output will contain all of the matches and the last line very ***respectfully*** telling you that you are blind *with number of matched results*
 
 ### **Note**
 
