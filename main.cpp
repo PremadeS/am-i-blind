@@ -119,6 +119,10 @@ void printHelp() {
 
 Config parseDaFuqingArgs(const int &argc, char *argv[]) {
 
+  if (argc == 1) {
+    printHelp();
+  }
+
   Config config;
   bool isNameSet = false;
   bool isPathSet = false;
