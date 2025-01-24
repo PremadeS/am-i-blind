@@ -10,20 +10,19 @@ namespace fs = std::filesystem;
 #define BLIND_MSG "yes you are"
 #define NOT_BLIND_MSG "no."
 
-// TODO: change the blind_msg_printed to blind_count, make it efficient and find out why error
 // yes i'm using snake_case and camelCase together and the earth is still the same as it was before, shock
 
 struct Config {
   string name;
   string path;
-  bool blind_msg_printed;
+  long long int blind_count;
   bool only_file;
   bool only_dir;
   bool recursive;     // find it recusrively?
   bool match_exactly; // find substring or da name must match exactly?
   Config()
       : recursive(false), match_exactly(false), only_file(false), only_dir(false), path(fs::current_path()),
-        blind_msg_printed(false) {} // default constructor
+        blind_count(0) {} // default constructor
 };
 
 void handleMatchExactly(const string &name, const string &pathStr, Config &config, const fs::directory_entry &entry) {
@@ -31,27 +30,24 @@ void handleMatchExactly(const string &name, const string &pathStr, Config &confi
   if (name == config.name && (!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
       (config.only_file && !fs::is_directory(entry))) {
 
-    if (!config.blind_msg_printed) {
-      cout << BLIND_MSG << endl;
-      config.blind_msg_printed = true;
-    }
+    config.blind_count += 1;
 
     cout << pathStr.substr(0, pathStr.length() - name.length());
-    cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END;
+    cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END << endl;
   }
 }
 
 void handleMatchSubstring(const string &name, const string &pathStr, Config &config, const fs::directory_entry &entry) {
   size_t pos = name.find(config.name);
   if (pos != std::string::npos) {
+
+    pos = pathStr.rfind(config.name);
+
     bool isDir = fs::is_directory(entry);
 
     if ((!config.only_file && !config.only_dir) || (config.only_dir && isDir) || (config.only_file && !isDir)) {
 
-      if (!config.blind_msg_printed) {
-        std::cout << BLIND_MSG << std::endl;
-        config.blind_msg_printed = true;
-      }
+      config.blind_count += 1;
 
       std::cout << pathStr.substr(0, pos);
       std::cout << (isDir ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << config.name << HIGHLIGHT_END;
@@ -181,8 +177,10 @@ int main(int argc, char *argv[]) {
   else
     findThisGarbage(config);
 
-  if (!config.blind_msg_printed)
+  if (config.blind_count == 0)
     cout << NOT_BLIND_MSG << endl;
+  else
+    cout << BLIND_MSG << " x" << config.blind_count << " times";
 
   return 0;
 }
