@@ -26,46 +26,49 @@ struct Config {
         blind_msg_printed(false) {} // default constructor
 };
 
+void handleMatchExactly(const string &name, const string &pathStr, Config &config, const fs::directory_entry &entry) {
+
+  if (name == config.name && (!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
+      (config.only_file && !fs::is_directory(entry))) {
+
+    if (!config.blind_msg_printed) {
+      cout << BLIND_MSG << endl;
+      config.blind_msg_printed = true;
+    }
+
+    cout << pathStr.substr(0, pathStr.length() - name.length());
+    cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END;
+  }
+}
+
+void handleMatchSubstring(const string &name, const string &pathStr, Config &config, const fs::directory_entry &entry) {
+  size_t pos = name.find(config.name);
+  if (pos != std::string::npos) {
+    bool isDir = fs::is_directory(entry);
+
+    if ((!config.only_file && !config.only_dir) || (config.only_dir && isDir) || (config.only_file && !isDir)) {
+
+      if (!config.blind_msg_printed) {
+        std::cout << BLIND_MSG << std::endl;
+        config.blind_msg_printed = true;
+      }
+
+      std::cout << pathStr.substr(0, pos);
+      std::cout << (isDir ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << config.name << HIGHLIGHT_END;
+      std::cout << pathStr.substr(pos + config.name.length()) << std::endl;
+    }
+  }
+}
+
 void handleMatch(const fs::directory_entry &entry, Config &config) {
   try {
     string name = entry.path().filename();
     string pathStr = entry.path().string();
 
     if (config.match_exactly) {
-      if (name == config.name) {
-        if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
-            (config.only_file && !fs::is_directory(entry))) {
-
-          if (!config.blind_msg_printed) {
-            cout << BLIND_MSG << endl;
-            config.blind_msg_printed = true;
-          }
-
-          cout << pathStr.substr(0, pathStr.length() - name.length());
-          cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << name << HIGHLIGHT_END;
-        }
-      }
-
+      handleMatchExactly(name, pathStr, config, entry);
     } else {
-      size_t pos = name.find(config.name);
-      if (pos != string::npos) {
-        pos = pathStr.rfind(config.name);
-        if ((!config.only_file && !config.only_dir) || (config.only_dir && fs::is_directory(entry)) ||
-            (config.only_file && !fs::is_directory(entry))) {
-          {
-
-            if (!config.blind_msg_printed) {
-              cout << BLIND_MSG << endl;
-              config.blind_msg_printed = true;
-            }
-
-            cout << pathStr.substr(0, pos);
-            cout << (fs::is_directory(entry) ? HIGHLIGHT_START_DIR : HIGHLIGHT_START_FILE) << config.name
-                 << HIGHLIGHT_END;
-            cout << pathStr.substr(pos + config.name.length()) << endl;
-          }
-        }
-      }
+      handleMatchSubstring(name, pathStr, config, entry);
     }
   } catch (const fs::filesystem_error &e) {
     cerr << "Error accessing " << entry.path() << ": " << e.what() << endl;
@@ -85,15 +88,17 @@ void findThisGarbage(Config &config) {
 // recursively find the garbage you specified
 void findThisGarbageRecursively(Config &config) {
   try {
-    for (const auto &entry : fs::recursive_directory_iterator(config.path)) {
+    fs::recursive_directory_iterator it(config.path, fs::directory_options::skip_permission_denied), end;
+    for (; it != end; ++it) {
       try {
+        const auto &entry = *it;
         handleMatch(entry, config);
-      } catch (const fs::filesystem_error &e) {
-        continue; // skip
+      } catch (const std::exception &e) {
+        std::cerr << "Error handling entry: " << it->path() << " - " << e.what() << std::endl;
       }
     }
   } catch (const fs::filesystem_error &e) {
-    cerr << "Error starting recursive directory iteration: " << e.what() << endl;
+    std::cerr << "Error during iteration: " << e.what() << std::endl;
   }
 }
 
